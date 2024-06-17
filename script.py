@@ -13,6 +13,8 @@ import os
 
 
 #Cnfiguracion del correo
+
+load_dotenv()
 SMTP_SERVER = os.getenv('SMTP_SERVER')
 SMTP_PORT = 465
 SMTP_USERNAME = os.getenv('SMTP_USERNAME')
@@ -29,12 +31,11 @@ def checkPublicIP():
         if ip != last_ip:
             saveIPPublic(ip)
             print(f'Public IP changed: {ip}')
-            sendEmail(ip)
+            recipients = read_Emails_List()
+            sendEmail(ip,recipients)
         else:
             print(f'Public IP: {ip}')
-            recipients = read_Emails_List()
-            for recipient in recipients:
-                print(f'Sending email to {recipient}')
+            
 
     except Exception as e:
         print(f'Error: {e}')
@@ -58,20 +59,23 @@ def saveIPPublic(ip):
     except Exception as e:
         print(f'Error: {e}')
 
-def sendEmail(newIp):
-    try:
-        msg = MIMEMultipart()
-        msg['From'] = SMTP_USERNAME
-        msg['To'] = 'salazarloerajared@gmail.com'
-        msg['Subject'] = 'Public IP changed'
-        body = f'Public IP changed: {newIp}'
-        msg.attach(MIMEText(body, 'plain'))
+def sendEmail(new_ip,recipient_list):
+    try:    
+
         server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT)
         server.login(SMTP_USERNAME, SMTP_PASSWORD)
-        text = msg.as_string()
-        server.sendmail(SMTP_USERNAME, 'salazarloerajared@gmail.com', text)
+
+        for recipient in recipient_list:
+            msg = MIMEMultipart()
+            msg['From'] = SMTP_USERNAME
+            msg['To'] = recipient
+            msg['Subject'] = 'Cambio de IP Pública'
+            body = f'La nueva IP pública es: {new_ip}'
+            msg.attach(MIMEText(body, 'plain'))
+            text = msg.as_string()
+            server.sendmail(SMTP_USERNAME, recipient, text)
         server.quit()
-        print('Email sent')
+        print('Correo electrónico enviado a todos los destinatarios')
     except Exception as e:
         print(f'Error: {e}')
 
